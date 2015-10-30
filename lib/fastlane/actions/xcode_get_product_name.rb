@@ -37,6 +37,12 @@ module Fastlane
           end
         }
 
+        if result
+        	Helper.log.info "PRODUCT_NAME #{result} found!".green
+        else
+        	Helper.log.info "PRODUCT_NAME not found".red
+        end
+        
         return result
 
         # sh "shellcommand ./path"
