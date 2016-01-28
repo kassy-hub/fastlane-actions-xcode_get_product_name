@@ -1,10 +1,10 @@
 # Fastlane::Actions::XcodeGetProductName
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/fastlane/actions/xcode_get_product_name`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+This is a [fastlane](https://github.com/fastlane/fastlane)-action which helps to get product name from Xcode project. You can designate scheme, target and build-configuration.
 
 ## Installation
+
+Make sure that [fastlane](https://github.com/fastlane/fastlane) is installed.
 
 Add this line to your application's Gemfile:
 
@@ -22,7 +22,38 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+In your lane:
+
+```ruby
+appName = xcode_get_product_name(
+    scheme: 'Dev',
+    configuration: 'Debug',
+)
+```
+    
+and you can get product name in `appName`.
+
+e.g. In your Fastfile:
+
+```ruby
+lane :build do |options|
+    version = get_build_number
+    scheme = options[:scheme] || 'Dev'
+    config = options[:config] || 'Debug'
+    directory = 'build/'
+    appName = xcode_get_product_name(
+        target: scheme,
+        configuration: config,
+    )
+    ipaName = "#{appName}##{version}(#{scheme}, #{config}).ipa"
+    gym(
+        scheme: scheme,
+        configuration: config,
+        output_directory: directory,
+        output_name: ipaName,
+    )
+end
+```
 
 ## Development
 
