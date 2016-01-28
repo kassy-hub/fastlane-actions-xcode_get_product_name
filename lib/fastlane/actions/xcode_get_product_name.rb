@@ -1,4 +1,6 @@
 require "fastlane/actions/xcode_get_product_name/version"
+require "gym"
+require "fastlane_core"
 
 module Fastlane
   module Actions
@@ -17,27 +19,20 @@ module Fastlane
         # fastlane will take care of reading in the parameter and fetching the environment variable:
         # Helper.log.info "Parameter API Token: #{params[:api_token]}"
 
-        tgt = params[:target]
-        cfg = params[:configuration]
-
-        # Assign folder from parameter or search for xcodeproj file
-        xcproj = Xcodeproj::Project.open(*Dir.glob('*.xcodeproj'))
-        result = nil
-
-        xcproj.targets.each { |target|
-          if target.name == tgt
-            target.build_configuration_list.build_configurations.each { |configuration|
-              if configuration.name == cfg
-                result = configuration.build_settings['PRODUCT_NAME']
-                if result.include?('TARGET_NAME') 
-                  result = target.name
-                end
-              end
-            }
-          end
+        if params[:target]
+            params[:scheme] = params[:target]
+        end
+        
+        o = Gym::Options.available_options + available_options
+        o = o.uniq { |op|
+            op.key
         }
-
-        if result
+        config = FastlaneCore::Configuration.create(o, params.values)
+        FastlaneCore::Project.detect_projects(config)
+        project = FastlaneCore::Project.new(config)
+        result = project.default_app_name.to_s
+        
+        if result.length > 0
         	Helper.log.info "PRODUCT_NAME #{result} found!".green
         else
         	Helper.log.info "PRODUCT_NAME not found".red
@@ -71,9 +66,15 @@ module Fastlane
         [
           FastlaneCore::ConfigItem.new(key: :target,
                                        is_string: true,
+                                       optional: true,
+                                      ),
+          FastlaneCore::ConfigItem.new(key: :scheme,
+                                       is_string: true,
+                                       optional: true,
                                       ),
           FastlaneCore::ConfigItem.new(key: :configuration,
                                        is_string: true,
+                                       optional: true,
                                       ),
         ]
       end
