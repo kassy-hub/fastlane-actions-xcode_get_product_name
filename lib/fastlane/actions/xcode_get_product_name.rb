@@ -2,6 +2,21 @@ require "fastlane/actions/xcode_get_product_name/version"
 require "gym"
 require "fastlane_core"
 
+module FastlaneCore
+  # Represents an Xcode project
+  class Project
+    def xcodebuild_parameters
+      proj = []
+      proj << "-workspace '#{options[:workspace]}'" if options[:workspace]
+      proj << "-scheme '#{options[:scheme]}'" if options[:scheme]
+      proj << "-project '#{options[:project]}'" if options[:project]
+      proj << "-configuration '#{options[:configuration]}'" if options[:configuration] 
+      
+      return proj
+    end
+  end
+end
+
 module Fastlane
   module Actions
     module SharedValues
@@ -30,7 +45,8 @@ module Fastlane
         config = FastlaneCore::Configuration.create(o, params.values)
         FastlaneCore::Project.detect_projects(config)
         project = FastlaneCore::Project.new(config)
-        result = project.default_app_name.to_s
+        project.select_scheme
+        result = project.app_name.to_s
         
         if result.length > 0
         	Helper.log.info "PRODUCT_NAME #{result} found!".green
