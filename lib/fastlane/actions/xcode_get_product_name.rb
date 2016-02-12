@@ -5,14 +5,25 @@ require "fastlane_core"
 module FastlaneCore
   # Represents an Xcode project
   class Project
-    def xcodebuild_parameters
-      proj = []
-      proj << "-workspace '#{options[:workspace]}'" if options[:workspace]
-      proj << "-scheme '#{options[:scheme]}'" if options[:scheme]
-      proj << "-project '#{options[:project]}'" if options[:project]
-      proj << "-configuration '#{options[:configuration]}'" if options[:configuration] 
-      
-      return proj
+    def build_settings(key: nil, optional: true)
+      unless @build_settings
+        # We also need to pass the workspace and scheme to this command
+        command = "xcrun xcodebuild -showBuildSettings #{xcodebuild_parameters.join(' ')}"
+        command += " -configuration '#{options[:configuration]}'" if options[:configuration]
+        @build_settings = Helper.backticks(command, print: false)
+      end
+
+      begin
+        result = @build_settings.split("\n").find { |c| c.split(" = ").first.strip == key }
+        return result.split(" = ").last
+      rescue => ex
+        return nil if optional # an optional value, we really don't care if something goes wrong
+
+        Helper.log.error caller.join("\n\t")
+        Helper.log.error "Could not fetch #{key} from project file: #{ex}"
+      end
+
+      nil
     end
   end
 end
